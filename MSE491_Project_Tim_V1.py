@@ -29,6 +29,8 @@ from tensorflow.keras.optimizers import Adam
 from sklearn import metrics 
 from sklearn.preprocessing import LabelEncoder
 
+import time
+
 #%% Progress bar : 
     # use in for loops as such:
     # for i in tqdm(range(69))
@@ -232,6 +234,8 @@ print("\nPre-training accuracy: %.4f%%" % accuracy)
 from keras.callbacks import ModelCheckpoint 
 from datetime import datetime 
 
+print('MULTI-LABEL: FeedForwardNN Fitting:')
+start = time.time()
 num_epochs = 50
 num_batch_size = 32
 
@@ -241,13 +245,15 @@ model.fit(Xtrain, ytrain,
           validation_data=(Xtest, ytest), 
           verbose=1)
 
-#%% Evaluating the model on the training and testing set
+# Evaluating the model on the test and train datasets
 
+score = model.evaluate(Xtest, ytest, verbose=0)
+end = time.time()
+print("Testing Accuracy: {0:.2%}".format(score[1]))
 score = model.evaluate(Xtrain, ytrain, verbose=0)
 print("Training Accuracy: {0:.2%}".format(score[1]))
-score = model.evaluate(Xtest, ytest, verbose=0)
-print("Testing Accuracy: {0:.2%}".format(score[1]))
 
+print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 #%%
 
 from sklearn.cluster import KMeans
@@ -277,6 +283,88 @@ from sklearn.pipeline import Pipeline
 #              verbose=1)
 
 
+#%% SVM : SUPPORT VECTOR MACHINES
+
+
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+start = time.time()
+print('\nSINGLE LABEL: SVM: Linear SVC: One-vs-Rest\n')
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=127)
+# One-vs-Rest
+clf = make_pipeline(StandardScaler(),
+                    # KMeans(n_clusters=50,random_state=69),
+                    LinearSVC(random_state=69, tol=1e-5))
+
+clf.fit(Xtrain,ytrain)
+
+score = clf.score(Xtest,ytest)
+print('Linear SVM test score= ', score)
+end = time.time()
+print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+# One-vs-One svm.SVC()
+
+#%% 
+from sklearn.svm import SVC
+start = time.time()
+print('\nSINGLE LABEL: SVM: SVC: One-vs-One\n')
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=69)
+# One-vs-Rest
+clf = make_pipeline(StandardScaler(),
+                    # KMeans(n_clusters=50,random_state=69),
+                    SVC(kernel='rbf',random_state=69, tol=1e-5,verbose=0))
+
+clf.fit(Xtrain,ytrain)
+
+score = clf.score(Xtest,ytest)
+print('SVC test score= ', score)
+end = time.time()
+print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+# One-vs-One svm.SVC()
+
 #%%
+# from sklearn.neighbors import KNeighborsClassifier
 
+#%% 
+from sklearn.svm import NuSVC
+start = time.time()
+print('\nSINGLE LABEL: SVM: NuSVC: One-vs-One\n')
 
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=69)
+# One-vs-Rest
+clf = make_pipeline(StandardScaler(),
+                    # KMeans(n_clusters=50,random_state=69),
+                    NuSVC(kernel='rbf',random_state=69, tol=1e-5,verbose=0))
+
+clf.fit(Xtrain,ytrain)
+
+score = clf.score(Xtest,ytest)
+print('SVC test score= ', score)
+end = time.time()
+print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+
+#%% 
+from sklearn.tree import DecisionTreeClassifier
+start = time.time()
+print('\nMULTI-LABEL: Decision Tree One-vs-One\n')
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
+# One-vs-Rest
+clf = make_pipeline(StandardScaler(),
+                    # KMeans(n_clusters=50,random_state=69),
+                    DecisionTreeClassifier(random_state=69))
+
+clf.fit(Xtrain,ytrain)
+
+score = clf.score(Xtest,ytest)
+print('SVC test score= ', score)
+end = time.time()
+print('\n\nDone in %.2f seconds.\n\n' % (end-start))
