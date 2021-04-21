@@ -226,7 +226,7 @@ accuracy = 100*score[1]
 print("\nPre-training accuracy: %.4f%%" % accuracy)
 
 
-print('\nMULTI-LABEL: FeedForwardNN Fitting:\n')
+print('\nFeedForwardNN Fitting: Encoded labels\n')
 start = time.time()
 num_epochs = 50
 num_batch_size = 32
@@ -241,9 +241,9 @@ model.fit(Xtrain, ytrain,
 
 score = model.evaluate(Xtest, ytest, verbose=0)
 end = time.time()
-print("Testing Accuracy: {0:.2%}".format(score[1]))
+print("Sequential NN Testing Accuracy: {0:.2%}".format(score[1]))
 score = model.evaluate(Xtrain, ytrain, verbose=0)
-print("Training Accuracy: {0:.2%}".format(score[1]))
+print("Sequential NN Training Accuracy: {0:.2%}".format(score[1]))
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
 ypred = model.predict(Xtest)
@@ -303,7 +303,7 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('Linear SVM test score= ', score)
+print('Linear SVC test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 # One-vs-One svm.SVC()
@@ -358,7 +358,7 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('SVC test score= ', score)
+print('NuSVC test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -384,7 +384,7 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('SVC test score= ', score)
+print('Decision Treee test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -410,7 +410,7 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('SVC test score= ', score)
+print('Extra Tree test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -442,7 +442,7 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('SVC test score= ', score)
+print('KNeighbors test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
