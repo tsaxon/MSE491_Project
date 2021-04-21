@@ -32,6 +32,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import classification_report, multilabel_confusion_matrix, confusion_matrix, plot_confusion_matrix
 import time
 
+#Confusion Matrix Heat Map
+import seaborn as sn
 #%% Progress bar : 
     # use in for loops as such:
     # for i in tqdm(range(69))
@@ -224,8 +226,6 @@ accuracy = 100*score[1]
 print("\nPre-training accuracy: %.4f%%" % accuracy)
 
 
-#%% How our example trains
-
 print('\nMULTI-LABEL: FeedForwardNN Fitting:\n')
 start = time.time()
 num_epochs = 50
@@ -245,6 +245,12 @@ print("Testing Accuracy: {0:.2%}".format(score[1]))
 score = model.evaluate(Xtrain, ytrain, verbose=0)
 print("Training Accuracy: {0:.2%}".format(score[1]))
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+
+ypred = model.predict(Xtest)
+cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
+plt.figure(figsize = (10,7))
+plt.title('Multi Layer Perceptron Decision Matrix')
+sn.heatmap(cfm)
 
 #%% MLP: Multi Layer Perceptron : Uses Backpropagation
 from sklearn.neural_network import MLPClassifier
@@ -267,6 +273,12 @@ print("MLP Testing Accuracy: {0:.2%}".format(score[1]))
 score = model.evaluate(Xtrain, ytrain, verbose=0)
 print("MLP Training Accuracy: {0:.2%}".format(score[1]))
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+
+ypred = mlp.predict(Xtest)
+cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
+plt.figure(figsize = (10,7))
+plt.title('Multi Layer Perceptron Decision Matrix')
+sn.heatmap(cfm)
 #%%
 ypred = mlp.predict(Xtest)
 
@@ -279,14 +291,14 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 start = time.time()
-print('\nSINGLE LABEL: SVM: Linear SVC: One-vs-Rest\n')
+print('\nSVM: Linear SVC: One-vs-Rest : Labels not encoded\n')
 
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=127)
 # One-vs-Rest
 clf = make_pipeline(StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
-                    LinearSVC(random_state=69, tol=1e-5))
+                    LinearSVC(random_state=69, tol=1e-5, max_iter = 1000))
 
 clf.fit(Xtrain,ytrain)
 
@@ -296,10 +308,16 @@ end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 # One-vs-One svm.SVC()
 
+ypred = clf.predict(Xtest)
+cfm = confusion_matrix(ytest, ypred, normalize='true')
+plt.figure(figsize = (10,7))
+plt.title('Linear SVC Confusion Matrix')
+sn.heatmap(cfm)
+
 #%% 
 from sklearn.svm import SVC
 start = time.time()
-print('\nSINGLE (multi?) LABEL: SVM: SVC: One-vs-One\n')
+print('\nSVM: SVC: One-vs-One : labels not encoded \n')
 
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=69)
@@ -308,16 +326,19 @@ Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_stat
 clf = make_pipeline(StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
                     SVC(kernel='rbf',random_state=69, tol=1e-5,verbose=0))
-
+# clf =  SVC(kernel='rbf',random_state=69, tol=1e-5,verbose=0)
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
 print('SVC test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
-# One-vs-One svm.SVC()
 
-
+ypred = clf.predict(Xtest)
+cfm = confusion_matrix(ytest, ypred, normalize='true')
+plt.figure(figsize = (10,7))
+plt.title('SVC Confusion Matrix')
+sn.heatmap(cfm)
 
 #%%
 # from sklearn.neighbors import KNeighborsClassifier
@@ -325,7 +346,7 @@ print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 #%% 
 from sklearn.svm import NuSVC
 start = time.time()
-print('\nSINGLE LABEL: SVM: NuSVC: One-vs-One\n')
+print('\nSVM: NuSVC: One-vs-One : labels not encoded \n')
 
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=69)
@@ -341,11 +362,17 @@ print('SVC test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
+ypred = clf.predict(Xtest)
+cfm = confusion_matrix(ytest, ypred, normalize='true')
+plt.figure(figsize = (10,7))
+plt.title('NuSVC Confusion Matrix')
+sn.heatmap(cfm)
+
 #%% 
 
 from sklearn.tree import DecisionTreeClassifier
 start = time.time()
-print('\nMULTI-LABEL: Decision Tree One-vs-One\n')
+print('\nDecision Tree Classifier One-vs-One : Encoded labels\n')
 
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
@@ -361,23 +388,25 @@ print('SVC test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
-#%% 
+ypred = clf.predict(Xtest)
+cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
+plt.figure(figsize = (10,7))
+plt.title('Decision Tree Confusion Matrix')
+sn.heatmap(cfm)
 
-from sklearn.tree import DecisionTreeClassifier
+#%%  Extra Tree Classifier
+
+from sklearn.tree import ExtraTreeClassifier
 start = time.time()
-print('\nMULTI-LABEL: Decision Tree One-vs-One\n')
+print('\nExtra Tree Classifier One-vs-One : Encoded labels\n')
 
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
-
 # One-vs-Rest
+clf = make_pipeline(StandardScaler(),
+                    # KMeans(n_clusters=50,random_state=69),
+                    ExtraTreeClassifier(random_state=69))
 
-# clf = make_pipeline(StandardScaler(),
-#                     # KMeans(n_clusters=50,random_state=69),
-#                     DecisionTreeClassifier(random_state=69))
-# clf = DecisionTreeClassifier(random_state=69)
-
-# # Above is unecessary, gives same results as line below
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
@@ -385,14 +414,48 @@ print('SVC test score= ', score)
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
-# y_pred = clf.predict(Xtest);
-# print(multilabel_confusion_matrix(ytest, y_pred))
-# print(classification_report(ytest, y_pred))
+ypred = clf.predict(Xtest)
+cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
+plt.figure(figsize = (10,7))
+plt.title('Extra Tree Confusion Matrix')
+sn.heatmap(cfm)
+
+
 #%%
-from sklearn.utils.multiclass import type_of_target
-print(type_of_target(yy))
+
+from sklearn.neighbors import KNeighborsClassifier
+start = time.time()
+
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
+# One-vs-Rest
+neighbors = 1
+
+print('\n KNeighbors Classifier : Encoded labels\n')
+
+clf = make_pipeline(StandardScaler(),
+                    # KMeans(n_clusters=50,random_state=69),
+                    KNeighborsClassifier(n_neighbors=neighbors)
+                    )
+
+clf.fit(Xtrain,ytrain)
+
+score = clf.score(Xtest,ytest)
+print('SVC test score= ', score)
+end = time.time()
+print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+
+ypred = clf.predict(Xtest)
+cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
+plt.figure(figsize = (10,7))
+plt.title('KNeighbors Classifier Confusion Matrix, n_neighbors = %.0f' %neighbors)
+sn.heatmap(cfm)
+#%%
 
 print('\ndone\n')
 
 
 experiment.end()
+#%%
+print(y)
