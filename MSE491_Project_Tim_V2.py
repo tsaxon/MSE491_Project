@@ -182,7 +182,7 @@ featuresdf = pd.DataFrame(features, columns=['feature','class_label'])
 # Convert features and labels to np
 X = np.array(featuresdf.feature.tolist())
 y = np.array(featuresdf.class_label.tolist())
-# Encode labels
+# Encode labels : turn into an [x, n_labels] array, filled with 0's or 1's
 le = LabelEncoder()
 yy = to_categorical(le.fit_transform(y))
 
@@ -206,16 +206,21 @@ print('\nA peak at featuresdf:\n', featuresdf.head())
 
 num_labels = yy.shape[1]
 
+layernodes1 = 256
+layernodes2 = 256
 model = keras.Sequential(
     [
      keras.layers.Input(shape=(Xtrain.shape[1])),
-     keras.layers.Dense(256, activation="relu", name="layer1", ),
+     keras.layers.Dense(layernodes1, activation="relu", name="layer1", ),
      keras.layers.Dropout(0.5),
-     keras.layers.Dense(256, activation="relu", name="layer2", ),
+     keras.layers.Dense(layernodes2, activation="relu", name="layer2", ),
      keras.layers.Dropout(0.5),
      # keras.layers.Dense(256, activation="relu", name="layer3", ),
      # keras.layers.Dropout(0.5),
-     keras.layers.Dense(num_labels, activation="softmax", name="layer4", ),
+     # keras.layers.Dense(256, activation="relu", name="layer4", ),
+     # keras.layers.Dense(256, activation="relu", name="layer3", ),
+     # keras.layers.Dropout(0.5),
+     keras.layers.Dense(num_labels, activation="softmax", name="last_layer", ),
      ])
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
 
@@ -228,12 +233,11 @@ print("\nPre-training accuracy: %.4f%%" % accuracy)
 
 print('\nFeedForwardNN Fitting: Encoded labels\n')
 start = time.time()
-num_epochs = 50
-num_batch_size = 32
-
+batch_size = 32
+epochs = 1000
 model.fit(Xtrain, ytrain, 
-          batch_size = 32, 
-          epochs = 50, 
+          batch_size = batch_size, 
+          epochs = epochs,
           validation_data=(Xtest, ytest), 
           verbose=1)
 
@@ -244,23 +248,29 @@ end = time.time()
 print("Sequential NN Testing Accuracy: {0:.2%}".format(score[1]))
 score = model.evaluate(Xtrain, ytrain, verbose=0)
 print("Sequential NN Training Accuracy: {0:.2%}".format(score[1]))
+
+print('\n Batch size = %.0f, Epochs = %.0f, #Nodes = %.0f,%.0f' %(batch_size,epochs,layernodes1,layernodes2))
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
 ypred = model.predict(Xtest)
 cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
 plt.figure(figsize = (10,7))
-plt.title('Multi Layer Perceptron Decision Matrix')
+plt.title('Sequential NN Decision Matrix')
 sn.heatmap(cfm)
 
 #%% MLP: Multi Layer Perceptron : Uses Backpropagation
 from sklearn.neural_network import MLPClassifier
+
+from sklearn.model_selection import train_test_split
+Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=127)
+
 start = time.time()
 
 mlp = MLPClassifier(
-     hidden_layer_sizes = (40,256,10),
+     hidden_layer_sizes = (256,256,10),
      activation = 'relu',
      solver = 'adam',
-     learning_rate = 'constant',
+     learning_rate = 'adaptive', # 'adaptive', 
      batch_size = 32,
      random_state= 69,
     )
@@ -269,9 +279,12 @@ mlp.fit(Xtrain, ytrain)
 
 score = model.evaluate(Xtest, ytest, verbose=0)
 end = time.time()
+
 print("MLP Testing Accuracy: {0:.2%}".format(score[1]))
+
 score = model.evaluate(Xtrain, ytrain, verbose=0)
 print("MLP Training Accuracy: {0:.2%}".format(score[1]))
+
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
 ypred = mlp.predict(Xtest)
@@ -279,10 +292,7 @@ cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pr
 plt.figure(figsize = (10,7))
 plt.title('Multi Layer Perceptron Decision Matrix')
 sn.heatmap(cfm)
-#%%
-ypred = mlp.predict(Xtest)
 
-print(confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1)))
 #%% SVM : SUPPORT VECTOR MACHINES
 
 
@@ -290,11 +300,13 @@ from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+# Don't use "One Hot Encoding" : 
 start = time.time()
 print('\nSVM: Linear SVC: One-vs-Rest : Labels not encoded\n')
 
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_state=127)
+
 # One-vs-Rest
 clf = make_pipeline(StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
