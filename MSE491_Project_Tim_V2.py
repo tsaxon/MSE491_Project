@@ -43,11 +43,11 @@ from tqdm import tqdm
 
 
 # Create experiment
-experiment = Experiment(
-    api_key="hfHGUgNto54Kw0GpWvAkNj7wH",
-    project_name="mse491-urbansound8k-tim-s",
-    workspace="tsaxon",
-)
+# experiment = Experiment(
+#     api_key="hfHGUgNto54Kw0GpWvAkNj7wH",
+#     project_name="mse491-urbansound8k-tim-s",
+#     workspace="tsaxon",
+# )
 
 
 # In[3]:
@@ -98,7 +98,7 @@ for i, label in tqdm(enumerate(labels)):
     librosa.display.waveplot(data, sr= sample_rate)
 plt.savefig('class_examples.png')
 # Log image to comet
-experiment.log_image('class_examples.png')
+# experiment.log_image('class_examples.png')
 
 
 # In[6]:
@@ -108,7 +108,7 @@ experiment.log_image('class_examples.png')
 print('\nLog wav files to comet for debugging\n')
 for label in tqdm(labels):
     fn = files[label]
-    experiment.log_audio(fn, metadata = {'name': label})
+    # experiment.log_audio(fn, metadata = {'name': label})
 audiodata = []
 for index, row in tqdm(df.iterrows()):
     fn = 'D:/PythonML/UrbanSound8K/UrbanSound8K/audio/fold{}/{}'.format(row['fold'], row['slice_file_name'])
@@ -137,7 +137,7 @@ librosa.display.specshow(mfccs, sr=librosa_sample_rate, x_axis='time')
 plt.title('mfccs')
 plt.savefig('MFCCs.png')
 # Log image to comet
-experiment.log_image('MFCCs.png')
+# experiment.log_image('MFCCs.png')
 
 
 # In[9]:
@@ -206,7 +206,7 @@ print('\nA peak at featuresdf:\n', featuresdf.head())
 
 num_labels = yy.shape[1]
 
-layernodes1 = 256
+layernodes1 = 128
 layernodes2 = 256
 model = keras.Sequential(
     [
@@ -215,8 +215,8 @@ model = keras.Sequential(
      keras.layers.Dropout(0.5),
      keras.layers.Dense(layernodes2, activation="relu", name="layer2", ),
      keras.layers.Dropout(0.5),
-     # keras.layers.Dense(256, activation="relu", name="layer3", ),
-     # keras.layers.Dropout(0.5),
+      keras.layers.Dense(layernodes2, activation="relu", name="layer3", ),
+      keras.layers.Dropout(0.5),
      # keras.layers.Dense(256, activation="relu", name="layer4", ),
      # keras.layers.Dense(256, activation="relu", name="layer3", ),
      # keras.layers.Dropout(0.5),
@@ -234,7 +234,7 @@ print("\nPre-training accuracy: %.4f%%" % accuracy)
 print('\nFeedForwardNN Fitting: Encoded labels\n')
 start = time.time()
 batch_size = 32
-epochs = 1000
+epochs = 50
 model.fit(Xtrain, ytrain, 
           batch_size = batch_size, 
           epochs = epochs,
@@ -264,28 +264,32 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=127)
 
+print('\nMLPClassifier\n')
 start = time.time()
 
+
 mlp = MLPClassifier(
-     hidden_layer_sizes = (256,256,10),
+      hidden_layer_sizes = (40,256,256),
      activation = 'relu',
      solver = 'adam',
-     learning_rate = 'adaptive', # 'adaptive', 
+     learning_rate = 'constant', # 'adaptive', 
      batch_size = 32,
      random_state= 69,
     )
 
 mlp.fit(Xtrain, ytrain)
 
-score = model.evaluate(Xtest, ytest, verbose=0)
+score = mlp.score(Xtest, ytest)
+
+
+print("MLP Testing Accuracy: %.2f" % (score*100))
 end = time.time()
 
-print("MLP Testing Accuracy: {0:.2%}".format(score[1]))
-
-score = model.evaluate(Xtrain, ytrain, verbose=0)
-print("MLP Training Accuracy: {0:.2%}".format(score[1]))
-
-print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+score = mlp.score(Xtrain, ytrain)
+print("MLP Training Accuracy: %.2f" % (score*100))
+end = time.time()
+elapsed = (end-start)
+print('\n\nDone in %.2f seconds.\n\n' % (elapsed))
 
 ypred = mlp.predict(Xtest)
 cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
@@ -455,19 +459,24 @@ clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
 print('KNeighbors test score= ', score)
+
+score = clf.score(Xtrain,ytrain)
+print('KNeighbors train score= ', score)
+
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
-
+print('# Neighbors = %.0f' %neighbors)
 ypred = clf.predict(Xtest)
 cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
 plt.figure(figsize = (10,7))
 plt.title('KNeighbors Classifier Confusion Matrix, n_neighbors = %.0f' %neighbors)
 sn.heatmap(cfm)
+
 #%%
 
 print('\ndone\n')
 
 
-experiment.end()
+# experiment.end()
 #%%
 print(y)
