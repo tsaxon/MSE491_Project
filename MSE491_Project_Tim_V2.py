@@ -314,12 +314,15 @@ Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_stat
 # One-vs-Rest
 clf = make_pipeline(StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
-                    LinearSVC(random_state=69, tol=1e-5, max_iter = 1000))
+                    LinearSVC(random_state=69, tol=1e-5, max_iter = 5000))
 
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('Linear SVC test score= ', score)
+print('Linear SVC test score= ', (100*score))
+
+score = clf.score(Xtrain,ytrain)
+print('Linear SVC train score= ', (100*score))
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 # One-vs-One svm.SVC()
@@ -346,7 +349,10 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('SVC test score= ', score)
+print('SVC test score= ', (100*score))
+
+score = clf.score(Xtrain,ytrain)
+print('SVC train score= ', (100*score))
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -374,7 +380,10 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('NuSVC test score= ', score)
+print('NuSVC test score= ', (100*score))
+
+score = clf.score(Xtrain,ytrain)
+print('NuSVC train score= ', (100*score))
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -398,9 +407,11 @@ clf = make_pipeline(StandardScaler(),
                     DecisionTreeClassifier(random_state=69))
 
 clf.fit(Xtrain,ytrain)
-
+score = clf.score(Xtrain,ytrain)
+print('Decision Tree train score= ', (100*score))
 score = clf.score(Xtest,ytest)
-print('Decision Treee test score= ', score)
+print('Decision Tree test score= ', (100*score))
+
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -419,14 +430,17 @@ print('\nExtra Tree Classifier One-vs-One : Encoded labels\n')
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
 # One-vs-Rest
-clf = make_pipeline(StandardScaler(),
+clf = make_pipeline(
+    StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
                     ExtraTreeClassifier(random_state=69))
 
 clf.fit(Xtrain,ytrain)
 
+score = clf.score(Xtrain,ytrain)
+print('Extra Tree train score= ', (100*score))
 score = clf.score(Xtest,ytest)
-print('Extra Tree test score= ', score)
+print('Extra Tree test score= ', (100*score))
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
