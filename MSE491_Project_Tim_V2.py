@@ -43,11 +43,11 @@ from tqdm import tqdm
 
 
 # Create experiment
-experiment = Experiment(
-    api_key="hfHGUgNto54Kw0GpWvAkNj7wH",
-    project_name="mse491-urbansound8k-tim-s",
-    workspace="tsaxon",
-)
+# experiment = Experiment(
+#     api_key="hfHGUgNto54Kw0GpWvAkNj7wH",
+#     project_name="mse491-urbansound8k-tim-s",
+#     workspace="tsaxon",
+# )
 
 
 # In[3]:
@@ -98,7 +98,7 @@ for i, label in tqdm(enumerate(labels)):
     librosa.display.waveplot(data, sr= sample_rate)
 plt.savefig('class_examples.png')
 # Log image to comet
-experiment.log_image('class_examples.png')
+# experiment.log_image('class_examples.png')
 
 
 # In[6]:
@@ -108,7 +108,7 @@ experiment.log_image('class_examples.png')
 print('\nLog wav files to comet for debugging\n')
 for label in tqdm(labels):
     fn = files[label]
-    experiment.log_audio(fn, metadata = {'name': label})
+    # experiment.log_audio(fn, metadata = {'name': label})
 audiodata = []
 for index, row in tqdm(df.iterrows()):
     fn = 'D:/PythonML/UrbanSound8K/UrbanSound8K/audio/fold{}/{}'.format(row['fold'], row['slice_file_name'])
@@ -137,7 +137,7 @@ librosa.display.specshow(mfccs, sr=librosa_sample_rate, x_axis='time')
 plt.title('mfccs')
 plt.savefig('MFCCs.png')
 # Log image to comet
-experiment.log_image('MFCCs.png')
+# experiment.log_image('MFCCs.png')
 
 
 # In[9]:
@@ -213,13 +213,10 @@ model = keras.Sequential(
      keras.layers.Input(shape=(Xtrain.shape[1])),
      keras.layers.Dense(layernodes1, activation="relu", name="layer1", ),
      keras.layers.Dropout(0.5),
-     keras.layers.Dense(layernodes2, activation="relu", name="layer2", ),
+     keras.layers.Dense(layernodes1, activation="relu", name="layer2", ),
      keras.layers.Dropout(0.5),
-     # keras.layers.Dense(256, activation="relu", name="layer3", ),
-     # keras.layers.Dropout(0.5),
-     # keras.layers.Dense(256, activation="relu", name="layer4", ),
-     # keras.layers.Dense(256, activation="relu", name="layer3", ),
-     # keras.layers.Dropout(0.5),
+      keras.layers.Dense(layernodes1, activation="relu", name="layer3", ),
+      keras.layers.Dropout(0.5),
      keras.layers.Dense(num_labels, activation="softmax", name="last_layer", ),
      ])
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
@@ -234,7 +231,7 @@ print("\nPre-training accuracy: %.4f%%" % accuracy)
 print('\nFeedForwardNN Fitting: Encoded labels\n')
 start = time.time()
 batch_size = 32
-epochs = 1000
+epochs = 100
 model.fit(Xtrain, ytrain, 
           batch_size = batch_size, 
           epochs = epochs,
@@ -264,28 +261,32 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=127)
 
+print('\nMLPClassifier\n')
 start = time.time()
 
+
 mlp = MLPClassifier(
-     hidden_layer_sizes = (256,256,10),
+      hidden_layer_sizes = (256,256,256),
      activation = 'relu',
      solver = 'adam',
-     learning_rate = 'adaptive', # 'adaptive', 
+     learning_rate = 'constant', # 'adaptive', 
      batch_size = 32,
      random_state= 69,
     )
 
 mlp.fit(Xtrain, ytrain)
 
-score = model.evaluate(Xtest, ytest, verbose=0)
+score = mlp.score(Xtest, ytest)
+
+
+print("MLP Testing Accuracy: %.2f" % (score*100))
 end = time.time()
 
-print("MLP Testing Accuracy: {0:.2%}".format(score[1]))
-
-score = model.evaluate(Xtrain, ytrain, verbose=0)
-print("MLP Training Accuracy: {0:.2%}".format(score[1]))
-
-print('\n\nDone in %.2f seconds.\n\n' % (end-start))
+score = mlp.score(Xtrain, ytrain)
+print("MLP Training Accuracy: %.2f" % (score*100))
+end = time.time()
+elapsed = (end-start)
+print('\n\nDone in %.2f seconds.\n\n' % (elapsed))
 
 ypred = mlp.predict(Xtest)
 cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
@@ -310,12 +311,15 @@ Xtrain, Xtest, ytrain, ytest = train_test_split(X, y, test_size=0.2, random_stat
 # One-vs-Rest
 clf = make_pipeline(StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
-                    LinearSVC(random_state=69, tol=1e-5, max_iter = 1000))
+                    LinearSVC(random_state=69, tol=1e-5, max_iter = 5000))
 
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('Linear SVC test score= ', score)
+print('Linear SVC test score= ', (100*score))
+
+score = clf.score(Xtrain,ytrain)
+print('Linear SVC train score= ', (100*score))
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 # One-vs-One svm.SVC()
@@ -342,7 +346,10 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('SVC test score= ', score)
+print('SVC test score= ', (100*score))
+
+score = clf.score(Xtrain,ytrain)
+print('SVC train score= ', (100*score))
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -370,7 +377,10 @@ clf = make_pipeline(StandardScaler(),
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('NuSVC test score= ', score)
+print('NuSVC test score= ', (100*score))
+
+score = clf.score(Xtrain,ytrain)
+print('NuSVC train score= ', (100*score))
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -394,9 +404,11 @@ clf = make_pipeline(StandardScaler(),
                     DecisionTreeClassifier(random_state=69))
 
 clf.fit(Xtrain,ytrain)
-
+score = clf.score(Xtrain,ytrain)
+print('Decision Tree train score= ', (100*score))
 score = clf.score(Xtest,ytest)
-print('Decision Treee test score= ', score)
+print('Decision Tree test score= ', (100*score))
+
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -415,14 +427,18 @@ print('\nExtra Tree Classifier One-vs-One : Encoded labels\n')
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
 # One-vs-Rest
-clf = make_pipeline(StandardScaler(),
+clf = make_pipeline(
+    StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
                     ExtraTreeClassifier(random_state=69))
 
 clf.fit(Xtrain,ytrain)
 
+score = clf.score(Xtrain,ytrain)
+print('Extra Tree train score= ', (100*score))
 score = clf.score(Xtest,ytest)
-print('Extra Tree test score= ', score)
+print('Extra Tree test score= ', (100*score))
+
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -442,32 +458,41 @@ start = time.time()
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
 # One-vs-Rest
-neighbors = 1
+neighbors = 5
 
 print('\n KNeighbors Classifier : Encoded labels\n')
 
 clf = make_pipeline(StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
-                    KNeighborsClassifier(n_neighbors=neighbors)
+                    KNeighborsClassifier(
+                        n_neighbors=neighbors
+                        )
                     )
 
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('KNeighbors test score= ', score)
+print('KNeighbors test score= ', (100*score))
+
+
+score = clf.score(Xtrain,ytrain)
+print('KNeighbors train score= ', (100*score))
+
+
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
-
+print('# Neighbors = %.0f' %neighbors)
 ypred = clf.predict(Xtest)
 cfm = confusion_matrix(ytest.argmax(axis=1), ypred.argmax(axis=1), normalize='pred')
 plt.figure(figsize = (10,7))
 plt.title('KNeighbors Classifier Confusion Matrix, n_neighbors = %.0f' %neighbors)
 sn.heatmap(cfm)
+
 #%%
 
 print('\ndone\n')
 
 
-experiment.end()
+# experiment.end()
 #%%
-print(y)
+print(X.shape)
