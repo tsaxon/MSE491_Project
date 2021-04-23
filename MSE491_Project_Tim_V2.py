@@ -206,20 +206,17 @@ print('\nA peak at featuresdf:\n', featuresdf.head())
 
 num_labels = yy.shape[1]
 
-layernodes1 = 128
+layernodes1 = 256
 layernodes2 = 256
 model = keras.Sequential(
     [
      keras.layers.Input(shape=(Xtrain.shape[1])),
      keras.layers.Dense(layernodes1, activation="relu", name="layer1", ),
      keras.layers.Dropout(0.5),
-     keras.layers.Dense(layernodes2, activation="relu", name="layer2", ),
+     keras.layers.Dense(layernodes1, activation="relu", name="layer2", ),
      keras.layers.Dropout(0.5),
-      keras.layers.Dense(layernodes2, activation="relu", name="layer3", ),
+      keras.layers.Dense(layernodes1, activation="relu", name="layer3", ),
       keras.layers.Dropout(0.5),
-     # keras.layers.Dense(256, activation="relu", name="layer4", ),
-     # keras.layers.Dense(256, activation="relu", name="layer3", ),
-     # keras.layers.Dropout(0.5),
      keras.layers.Dense(num_labels, activation="softmax", name="last_layer", ),
      ])
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
@@ -234,7 +231,7 @@ print("\nPre-training accuracy: %.4f%%" % accuracy)
 print('\nFeedForwardNN Fitting: Encoded labels\n')
 start = time.time()
 batch_size = 32
-epochs = 50
+epochs = 100
 model.fit(Xtrain, ytrain, 
           batch_size = batch_size, 
           epochs = epochs,
@@ -269,7 +266,7 @@ start = time.time()
 
 
 mlp = MLPClassifier(
-      hidden_layer_sizes = (40,256,256),
+      hidden_layer_sizes = (256,256,256),
      activation = 'relu',
      solver = 'adam',
      learning_rate = 'constant', # 'adaptive', 
@@ -441,6 +438,7 @@ score = clf.score(Xtrain,ytrain)
 print('Extra Tree train score= ', (100*score))
 score = clf.score(Xtest,ytest)
 print('Extra Tree test score= ', (100*score))
+
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
 
@@ -460,22 +458,26 @@ start = time.time()
 from sklearn.model_selection import train_test_split
 Xtrain, Xtest, ytrain, ytest = train_test_split(X, yy, test_size=0.2, random_state=69)
 # One-vs-Rest
-neighbors = 1
+neighbors = 5
 
 print('\n KNeighbors Classifier : Encoded labels\n')
 
 clf = make_pipeline(StandardScaler(),
                     # KMeans(n_clusters=50,random_state=69),
-                    KNeighborsClassifier(n_neighbors=neighbors)
+                    KNeighborsClassifier(
+                        n_neighbors=neighbors
+                        )
                     )
 
 clf.fit(Xtrain,ytrain)
 
 score = clf.score(Xtest,ytest)
-print('KNeighbors test score= ', score)
+print('KNeighbors test score= ', (100*score))
+
 
 score = clf.score(Xtrain,ytrain)
-print('KNeighbors train score= ', score)
+print('KNeighbors train score= ', (100*score))
+
 
 end = time.time()
 print('\n\nDone in %.2f seconds.\n\n' % (end-start))
@@ -493,4 +495,4 @@ print('\ndone\n')
 
 # experiment.end()
 #%%
-print(y)
+print(X.shape)
