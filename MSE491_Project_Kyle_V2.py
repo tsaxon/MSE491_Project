@@ -263,10 +263,10 @@ mlp = MLPClassifier(
 
 mlp.fit(Xtrain, ytrain)
 
-score = model.evaluate(Xtest, ytest, verbose=0)
+score = mlp.score(Xtest, ytest)
 end = time.time()
 
-print("MLP Testing Accuracy: {0:.2%}".format(score[1]))
+print("MLP Testing Accuracy: {0:.2%}".format(score))
 
 score = model.evaluate(Xtrain, ytrain, verbose=0)
 print("MLP Training Accuracy: {0:.2%}".format(score[1]))
